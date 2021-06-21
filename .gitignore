@@ -1,0 +1,6 @@
+docker-hotreload-laravel/vendor
+docker-hotreload-vue/node_modules
+docker-hotreload-vue/.env*
+docker-compose.yml
+node_modules
+.idea/
