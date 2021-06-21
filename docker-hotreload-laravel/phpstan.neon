@@ -1,0 +1,9 @@
+includes:
+    - ./vendor/nunomaduro/larastan/extension.neon
+parameters:
+    level: 4
+    ignoreErrors:
+        - '#^Cannot call method register\(\) on void\.$#'
+        - '#^Result of static method Laravel\\Nova\\Nova::routes\(\) \(void\) is used\.$#'
+    paths:
+        - app

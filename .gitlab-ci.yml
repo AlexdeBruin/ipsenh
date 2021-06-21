@@ -1,0 +1,118 @@
+image: docker:dind
+
+stages:
+  - build
+  - test
+  - cleanup
+  # - database
+  - deploy
+
+
+build_vue:
+ stage: build
+ script:
+   - source /home/gitlab-runner/set_docker_tag.sh
+   - cd docker-hotreload-vue
+   - cp /home/gitlab-runner/dev/.env.development .env.development
+   - cp /home/gitlab-runner/prod/.env.production .env.production
+   - docker build . -t docker-vue:${DOCKER_TAG}
+ tags:
+   - shell
+
+test_vue:
+ stage: test
+ script:
+   - source /home/gitlab-runner/set_docker_tag.sh
+   - docker run docker-vue:${DOCKER_TAG} cqc "src/**/*.vue" "src/**/*.js"
+   - docker run docker-vue:${DOCKER_TAG} npm test
+ tags:
+   - shell
+
+deploy_dev_vue:
+ stage: deploy
+ script:
+   - docker rm $(docker stop $(docker ps -a -q --filter "name=vue-dev" --format="{{.ID}}")) || true
+   - docker run -d -p 4000:80 --name vue-dev docker-vue:dev npm run serve
+ tags:
+   - shell
+ only:
+   - dev
+
+deploy_prod_vue:
+ stage: deploy
+ script:
+   - docker rm $(docker stop $(docker ps -a -q --filter "name=vue-prod" --format="{{.ID}}")) || true
+   - docker run -d -p 80:80 --name vue-prod docker-vue:latest /bin/bash -c "npm run build; http-server -p 80 dist"
+ tags:
+   - shell
+ only:
+   - master
+
+
+build_laravel:
+  stage: build
+  script:
+    - source /home/gitlab-runner/set_docker_tag.sh
+    - cd docker-hotreload-laravel
+    - docker build . -t docker-laravel:${DOCKER_TAG} 
+  tags:
+    - shell
+
+test_laravel:
+ stage: test
+ script:
+   - source /home/gitlab-runner/set_docker_tag.sh
+   - docker run docker-laravel:${DOCKER_TAG}  php artisan code:analyse --level 4
+   - docker run docker-laravel:${DOCKER_TAG}  vendor/bin/phpunit --testdox
+ tags:
+   - shell
+
+deploy_dev_laravel:
+  stage: deploy
+  script:
+    - mkdir -p /var/www/data/dev
+    - docker rm $(docker stop $(docker ps -a -q --filter "name=laravel-dev" --format="{{.ID}}")) || true
+    - docker run -d -p 5000:5000 --net=test -v /var/www/data/dev:/var/www/storage/course_file --name laravel-dev docker-laravel:dev php artisan serve --host=0.0.0.0 --port=5000
+    - docker cp /home/gitlab-runner/dev/.env laravel-dev:/var/www/.env
+    - docker exec laravel-dev sh -c "php artisan migrate:refresh --seed; php artisan passport:install; php artisan key:generate; php artisan config:cache;"
+  tags:
+    - shell
+  only:
+    - dev
+
+deploy_prod_laravel:
+  stage: deploy
+  script:
+    - mkdir -p /var/www/data/prod
+    - docker rm $(docker stop $(docker ps -a -q --filter "name=laravel-prod" --format="{{.ID}}")) || true
+    - docker run -d -p 1337:5000 --net=test -v /var/www/data/prod:/var/www/storage/course_file --name laravel-prod docker-laravel:latest php artisan serve --host=0.0.0.0 --port=5000
+    - docker cp /home/gitlab-runner/prod/.env laravel-prod:/var/www/.env
+    - docker exec laravel-prod sh -c "php artisan migrate --force; php artisan passport:install; php artisan key:generate; php artisan config:cache;"
+  tags:
+    - shell
+  only:
+    - master
+
+cleanup:
+  stage: cleanup
+  script:
+   - docker rm -f docker-vue-dev:$CI_BUILD_REF_NAME || true
+   - docker rm -f docker-laravel-dev:$CI_BUILD_REF_NAME || true
+   - docker rmi -f docker-laravel-dev:$CI_BUILD_REF_NAME
+   - docker rmi -f docker-vue-dev:$CI_BUILD_REF_NAME
+  tags:
+    - shell
+  except:
+   - dev
+   - master
+
+# deploy_database:
+#   stage: database
+#   script:
+#     - docker rm $(docker stop $(docker ps -a -q --filter "name=mysql_server" --format="{{.ID}}")) || true
+#     - docker run -d --name mysql_server -p 3306:3306 --net=bridge -e MYSQL_DATABASE='NDLO' -e MYSQL_USER='NDLO' -e MYSQL_PASSWORD='password123' -e MYSQL_ROOT_PASSWORD='password123' -v 'persistent:/var/lib/mysql' mysql:5.7
+#   tags:
+#     - shell
+#   only:
+#     - dev
+#     - master

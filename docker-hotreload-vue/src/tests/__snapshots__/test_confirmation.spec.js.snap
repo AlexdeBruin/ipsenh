@@ -1,0 +1,35 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Confirmation renders correctly 1`] = `
+<v-dialog
+  max-width="500px"
+>
+  <v-card>
+    <v-card-title
+      class="headline"
+    >
+       
+      <!---->
+    </v-card-title>
+     
+    <v-card-actions>
+      <v-spacer />
+       
+      <v-btn
+        color="green darken-1"
+        flat="flat"
+      >
+        
+      </v-btn>
+       
+      <v-btn
+        color="red darken-1"
+        flat="flat"
+        id="cancleButton"
+      >
+        Annuleren
+      </v-btn>
+    </v-card-actions>
+  </v-card>
+</v-dialog>
+`;

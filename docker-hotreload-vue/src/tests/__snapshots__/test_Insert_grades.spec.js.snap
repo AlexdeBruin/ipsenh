@@ -1,0 +1,40 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`courseDashboard renders correctly 1`] = `
+<div>
+  <v-toolbar>
+    <v-toolbar-side-icon
+      class="icon"
+    >
+      <v-icon
+        color="white"
+        large=""
+      >
+        keyboard_arrow_left
+      </v-icon>
+    </v-toolbar-side-icon>
+     
+    <v-tabs
+      grow=""
+    >
+      <v-tab>
+        Cijfers invoeren
+      </v-tab>
+       
+      <v-tab>
+        Cijfers inzien
+      </v-tab>
+    </v-tabs>
+  </v-toolbar>
+   
+  <v-tabs-items>
+    <v-tab-item>
+      <insert-grades-stub />
+    </v-tab-item>
+     
+    <v-tab-item>
+      <grades-overview-stub />
+    </v-tab-item>
+  </v-tabs-items>
+</div>
+`;
